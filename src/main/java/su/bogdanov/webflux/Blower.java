@@ -17,6 +17,9 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class Blower {
@@ -29,6 +32,8 @@ public class Blower {
                     .ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
                     .withZone(ZoneOffset.UTC);
             CountDownLatch cnt = new CountDownLatch(poolSize);
+            AtomicInteger pending = new AtomicInteger();
+            AtomicLong total = new AtomicLong();
             for (int i = 0; i < poolSize; i++) {
                 final int threadId = i;
                 pool.submit(() -> {
@@ -42,6 +47,7 @@ public class Blower {
                             try (OutputStream out = connection.getOutputStream()) {
                                 out.write(request.getBytes(StandardCharsets.UTF_8));
                             }
+                            pending.incrementAndGet();
                             String response;
                             try (
                                     InputStream in = connection.getInputStream();
@@ -50,9 +56,12 @@ public class Blower {
                             ) {
                                 response = buf.lines().collect(Collectors.joining("\n"));
                             }
-                            Instant t2 = Instant.now();
-                            Duration d = Duration.between(t1, t2);
-                            System.out.printf("%3d [%s] %s -> %s (%d ms)%n", threadId, dateTimeFormat.format(Instant.now()), request, response, d.toMillis());
+                            int p = pending.decrementAndGet();
+                            total.incrementAndGet();
+                            // Instant t2 = Instant.now();
+                            // Duration d = Duration.between(t1, t2);
+                            // System.out.printf("%3d [%s] %s -> %s (%d ms) %d%n", threadId, dateTimeFormat.format(Instant.now()), request, response, d.toMillis(), p);
+                            Thread.sleep(2000L);
                         }
                     } catch (Throwable e) {
                         e.printStackTrace();
@@ -62,6 +71,9 @@ public class Blower {
                     }
                 });
             }
+            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+                System.out.printf("[%s] pending: %d, total: %d%n", dateTimeFormat.format(Instant.now()), pending.get(), total.get());
+            }, 5000L, 5000L, TimeUnit.MILLISECONDS);
             cnt.await();
             pool.shutdown();
         } catch (Exception e) {
