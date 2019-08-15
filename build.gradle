@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group 'su.bogdanov.webflux'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-webflux:2.0.4.RELEASE"
+    // compile "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:2.1.2.RELEASE"
+}
