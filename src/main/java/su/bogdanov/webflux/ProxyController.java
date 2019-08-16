@@ -9,8 +9,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/proxy")
 public class ProxyController {

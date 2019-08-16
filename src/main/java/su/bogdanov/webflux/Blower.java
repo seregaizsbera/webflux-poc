@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Blower {
+    private static final long MONITORING_PERIOD_MS = 5000L;
 
     public static void main(String args[]) {
         try {
@@ -28,9 +30,25 @@ public class Blower {
             CountDownLatch cnt = new CountDownLatch(poolSize);
             AtomicInteger pending = new AtomicInteger();
             AtomicLong total = new AtomicLong();
+            AtomicLong lastTotal = new AtomicLong(total.get());
+            AtomicInteger live = new AtomicInteger();
+            AtomicInteger exited = new AtomicInteger();
+            Instant t1 = Instant.now();
+            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
+                    () -> {
+                        long currentTotal = total.get();
+                        double rps = (currentTotal - lastTotal.get()) * 1000 / (double) MONITORING_PERIOD_MS;
+                        double avg = currentTotal * 1000 / (double) Duration.between(t1, Instant.now()).toMillis();
+                        lastTotal.set(currentTotal);
+                        System.out.printf("[%s] pending: %3d, total: %5d (live: %3d; exited: %3d) %.2f rps (%.2f rps)%n", dateTimeFormat.format(Instant.now()), pending.get(), total.get(), live.get(), exited.get(), rps, avg);
+                    },
+                    MONITORING_PERIOD_MS,
+                    MONITORING_PERIOD_MS, TimeUnit.MILLISECONDS);
             for (int i = 0; i < poolSize; i++) {
+                Thread.sleep(10L);
                 final int threadId = i;
                 pool.submit(() -> {
+                    live.incrementAndGet();
                     try {
                         while (true) {
                             // Instant t1 = Instant.now();
@@ -63,11 +81,11 @@ public class Blower {
                     } finally {
                         System.out.printf("%d -> exited%n", threadId);
                         cnt.countDown();
+                        live.decrementAndGet();
+                        exited.incrementAndGet();
                     }
                 });
             }
-            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
-                    () -> System.out.printf("[%s] pending: %d, total: %d%n", dateTimeFormat.format(Instant.now()), pending.get(), total.get()), 5000L, 5000L, TimeUnit.MILLISECONDS);
             cnt.await();
             pool.shutdown();
         } catch (Exception e) {
