@@ -1,14 +1,9 @@
 package su.bogdanov.webflux;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +15,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class Blower {
 
@@ -39,7 +33,7 @@ public class Blower {
                 pool.submit(() -> {
                     try {
                         while (true) {
-                            Instant t1 = Instant.now();
+                            // Instant t1 = Instant.now();
                             String request = UUID.randomUUID().toString();
                             URLConnection connection = new URL("http://localhost:8081/proxy/").openConnection();
                             connection.setDoOutput(true);
@@ -48,15 +42,16 @@ public class Blower {
                                 out.write(request.getBytes(StandardCharsets.UTF_8));
                             }
                             pending.incrementAndGet();
-                            String response;
+                            // String response;
                             try (
                                     InputStream in = connection.getInputStream();
                                     Reader input = new InputStreamReader(in, StandardCharsets.UTF_8);
-                                    BufferedReader buf = new BufferedReader(input);
+                                    BufferedReader buf = new BufferedReader(input)
                             ) {
-                                response = buf.lines().collect(Collectors.joining("\n"));
+                                // response = buf.lines().collect(Collectors.joining("\n"));
+                                buf.lines().forEach(s -> {});
                             }
-                            int p = pending.decrementAndGet();
+                            /* int p = */ pending.decrementAndGet();
                             total.incrementAndGet();
                             // Instant t2 = Instant.now();
                             // Duration d = Duration.between(t1, t2);
@@ -71,9 +66,8 @@ public class Blower {
                     }
                 });
             }
-            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-                System.out.printf("[%s] pending: %d, total: %d%n", dateTimeFormat.format(Instant.now()), pending.get(), total.get());
-            }, 5000L, 5000L, TimeUnit.MILLISECONDS);
+            Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
+                    () -> System.out.printf("[%s] pending: %d, total: %d%n", dateTimeFormat.format(Instant.now()), pending.get(), total.get()), 5000L, 5000L, TimeUnit.MILLISECONDS);
             cnt.await();
             pool.shutdown();
         } catch (Exception e) {
