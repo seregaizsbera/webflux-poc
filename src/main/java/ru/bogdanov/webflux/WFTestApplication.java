@@ -1,8 +1,10 @@
-package su.bogdanov.webflux;
+package ru.bogdanov.webflux;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
+@ComponentScan
 @SpringBootApplication
 public class WFTestApplication {
     public static void main(String[] args) {
