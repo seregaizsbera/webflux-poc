@@ -24,10 +24,10 @@ public class BreakController {
     public Mono<String> theBlock(@RequestBody String input) {
         long delay = makeUpDelay();
         return Mono.just(makeResponse(input, delay))
-                .map(s -> block(delay, s));
+                .map(s -> sleep(delay, s));
     }
 
-    private static <T> T block(long delay, T value) {
+    private static <T> T sleep(long delay, T value) {
         try {
             Thread.sleep(delay);
         } catch (InterruptedException e) {
