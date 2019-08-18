@@ -39,7 +39,6 @@ public class BreakController {
     }
 
     private static String makeResponse(String input, long delayMs) {
-        //noinspection MagicNumber
         return String.format("%s -> %.3fs", input, delayMs / 1000.);
     }
 

@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class Blower {
     private static final long MONITORING_PERIOD_MS = 5000L;
-    private static final int DEFAULT_THREAD_POOL_SIZE = 25;
     private static final long THREAD_STARTUP_DELAY_MS = 10L;
     private static final long DELAY_BETWEEN_REQUESTS_MS = 2000L;
+    private static final int DEFAULT_THREAD_POOL_SIZE = 25;
 
     private Blower() {}
 
@@ -56,7 +56,7 @@ public final class Blower {
         ExecutorService pool = Executors.newFixedThreadPool(poolSize);
         Context context = new Context(poolSize);
         Executors.newScheduledThreadPool(1, Blower::makeDaemon)
-                .scheduleAtFixedRate(context::dump,0L, MONITORING_PERIOD_MS, TimeUnit.MILLISECONDS);
+                .scheduleAtFixedRate(context::dump, 0L, MONITORING_PERIOD_MS, TimeUnit.MILLISECONDS);
         URL url = new URL(String.format("http://localhost:8080/%s/", mode));
         for (int i = 0; i < poolSize; i++) {
             Thread.sleep(THREAD_STARTUP_DELAY_MS);
