@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/proxy")
 public class ProxyController {
-    private WebClient client;
+    private final WebClient client;
 
     public ProxyController() {
         this.client = WebClient.create();
